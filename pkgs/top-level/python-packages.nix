@@ -5972,8 +5972,6 @@ self: super: with self; {
 
   huey = callPackage ../development/python-modules/huey { };
 
-  hug = callPackage ../development/python-modules/hug { };
-
   huggingface-hub = callPackage ../development/python-modules/huggingface-hub { };
 
   huisbaasje-client = callPackage ../development/python-modules/huisbaasje-client { };
