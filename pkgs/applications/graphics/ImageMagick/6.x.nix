@@ -32,17 +32,24 @@ let
     else if stdenv.hostPlatform.system == "aarch64-linux"  || stdenv.hostPlatform.system == "aarch64-darwin" then "aarch64"
     else if stdenv.hostPlatform.system == "powerpc64le-linux" then "ppc64le"
     else null;
+
+  cfg = {
+    version = "6.9.9-34";
+    sha256 = "0sqrgyfi7i7x1akna95c1qhk9sxxswzm3pkssfi4w6v7bn24g25g";
+    patches = [];
+  };
+
 in
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "imagemagick";
-  version = "6.9.12-68";
+  inherit (cfg) version;
 
   src = fetchFromGitHub {
     owner = "ImageMagick";
     repo = "ImageMagick6";
-    rev = finalAttrs.version;
-    sha256 = "sha256-slQcA0cblxtG/1DiJx5swUh7Kfwgz5HG70eqJFLaQJI=";
+    rev = cfg.version;
+    inherit (cfg) sha256;
   };
 
   outputs = [ "out" "dev" "doc" ]; # bin/ isn't really big
@@ -120,25 +127,5 @@ stdenv.mkDerivation (finalAttrs: {
     platforms = platforms.linux ++ platforms.darwin;
     maintainers = with maintainers; [ ];
     license = licenses.asl20;
-    knownVulnerabilities = [
-      "CVE-2018-16328"
-      "CVE-2018-16329"
-      "CVE-2019-13136"
-      "CVE-2019-17547"
-      "CVE-2020-25663"
-      "CVE-2020-27768"
-      "CVE-2021-3596"
-      "CVE-2021-3596"
-      "CVE-2021-3596"
-      "CVE-2021-3610"
-      "CVE-2021-20244"
-      "CVE-2021-20244"
-      "CVE-2021-20310"
-      "CVE-2021-20311"
-      "CVE-2021-20312"
-      "CVE-2021-20313"
-      "CVE-2022-0284"
-      "CVE-2022-2719"
-    ];
   };
 })
