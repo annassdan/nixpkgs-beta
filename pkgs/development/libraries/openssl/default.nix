@@ -220,25 +220,17 @@ let
 
 in {
 
-  # If you do upgrade here, please update in pkgs/top-level/release.nix
-  # the permitted insecure version to ensure it gets cached for our users
-  # and backport this to stable release (23.05).
+  # Refactored, purpose only used for Fishsourcev3 old
   openssl_1_1 = common {
-    version = "1.1.1w";
-    sha256 = "sha256-zzCYlQy02FOtlcCEHx+cbT3BAtzPys1SHZOSUgi3asg=";
+    version = "1.0.2r";
+    sha256 = "1mnh27zf6r1bhm5d9fxqq9slv2gz0d9z2ij9i679b0wapa5x0ldf";
     patches = [
-      ./1.1/nix-ssl-cert-file.patch
+      ./1.0.2/nix-ssl-cert-file.patch
 
       (if stdenv.hostPlatform.isDarwin
-       then ./use-etc-ssl-certs-darwin.patch
-       else ./use-etc-ssl-certs.patch)
+       then ./1.0.2/use-etc-ssl-certs-darwin.patch
+       else ./1.0.2/use-etc-ssl-certs.patch)
     ];
-    withDocs = true;
-    extraMeta = {
-      knownVulnerabilities = [
-        "OpenSSL 1.1 is reaching its end of life on 2023/09/11 and cannot be supported through the NixOS 23.05 release cycle. https://www.openssl.org/blog/blog/2023/03/28/1.1.1-EOL/"
-      ];
-    };
   };
 
   openssl_3 = common {
