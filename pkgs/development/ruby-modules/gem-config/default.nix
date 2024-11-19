@@ -18,7 +18,7 @@
 # (to make gems behave if necessary).
 
 { lib, fetchurl, writeScript, ruby, libkrb5, libxml2, libxslt, python2, stdenv, which
-, libiconv, postgresql, v8, clang, sqlite, zlib, imagemagick, lasem
+, libiconv, postgresql, v8, clang, sqlite, zlib, imagemagick, imagemagick6, lasem
 , pkg-config , ncurses, xapian, gpgme, util-linux, tzdata, icu, libffi
 , cmake, libssh2, openssl, openssl_1_1, libmysqlclient, git, perl, pcre, pcre2, gecode_3, curl
 , msgpack, libsodium, snappy, libossp_uuid, lxc, libpcap, xorg, gtk2, buildRubyGem
@@ -641,7 +641,7 @@ in
 
   rmagick = attrs: {
     nativeBuildInputs = [ pkg-config ];
-    buildInputs = [ imagemagick which ];
+    buildInputs = [ imagemagick6 which ];
   };
 
   rouge = attrs: {
