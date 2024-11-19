@@ -62,7 +62,7 @@ stdenv.mkDerivation (finalAttrs: {
 #    rev = finalAttrs.version;
 #    sha256 = "sha256-slQcA0cblxtG/1DiJx5swUh7Kfwgz5HG70eqJFLaQJI=";
 #  };
-  name = "imagemagick-${version}";
+  name = "imagemagick-${cfg.version}";
   inherit (cfg) version;
 
   src = fetchFromGitHub {
