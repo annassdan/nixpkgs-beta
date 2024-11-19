@@ -73,13 +73,24 @@ stdenv.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [ pkg-config libtool ];
 
-  buildInputs =
-      [ zlib fontconfig freetype ghostscript
-        libpng libtiff libxml2 libheif libde265
-      ]
-      ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
-        [ openexr librsvg openjpeg ]
-      ++ lib.optional stdenv.isDarwin ApplicationServices;
+  buildInputs = [ ]
+    ++ lib.optional zlibSupport zlib
+    ++ lib.optional fontconfigSupport fontconfig
+    ++ lib.optional ghostscriptSupport ghostscript
+    ++ lib.optional liblqr1Support liblqr1
+    ++ lib.optional libpngSupport libpng
+    ++ lib.optional libtiffSupport libtiff
+    ++ lib.optional libxml2Support libxml2
+    ++ lib.optional libheifSupport libheif
+    ++ lib.optional libde265Support libde265
+    ++ lib.optional djvulibreSupport djvulibre
+    ++ lib.optional openexrSupport openexr
+    ++ lib.optional librsvgSupport librsvg
+    ++ lib.optional openjpegSupport openjpeg
+    ++ lib.optionals stdenv.isDarwin [
+      ApplicationServices
+      Foundation
+    ];
 
 #  propagatedBuildInputs =
 #      [ bzip2 freetype libjpeg lcms2 fftw ]
