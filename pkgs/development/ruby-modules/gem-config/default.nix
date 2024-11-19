@@ -640,7 +640,7 @@ in
   };
 
   rmagick = attrs: {
-    nativeBuildInputs = [ pkg-config ];
+    nativeBuildInputs = [ imagemagick6 pkg-config ];
     buildInputs = [ imagemagick6 which ];
   };
 
