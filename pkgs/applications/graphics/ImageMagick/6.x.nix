@@ -84,7 +84,7 @@ stdenv.mkDerivation (finalAttrs: {
   propagatedBuildInputs =
       [ bzip2 freetype libjpeg lcms2 fftw ]
       ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
-        [ libX11 libXext libXt libwebp ]
+        [ libX11 libXt libwebp ]
       ;
 
   doCheck = false; # fails 2 out of 76 tests
