@@ -3,6 +3,7 @@
 , zlibSupport ? true, zlib
 , libX11Support ? !stdenv.hostPlatform.isMinGW, libX11
 , libXext
+, fetchpatch
 , libXtSupport ? !stdenv.hostPlatform.isMinGW, libXt
 , fontconfigSupport ? true, fontconfig
 , freetypeSupport ? true, freetype
