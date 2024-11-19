@@ -83,7 +83,7 @@ stdenv.mkDerivation rec {
       [ "--enable-static" "--disable-shared" ] # due to libxml2 being without DLLs ATM
     ;
 
-  nativeBuildInputs = [ pkgconfig libtool ];
+  nativeBuildInputs = [ pkg-config libtool ];
 
   buildInputs =
     [ zlib fontconfig freetype ghostscript
@@ -106,10 +106,10 @@ stdenv.mkDerivation rec {
     moveToOutput "bin/*-config" "$dev"
     moveToOutput "lib/ImageMagick-*/config-Q16" "$dev" # includes configure params
     for file in "$dev"/bin/*-config; do
-      substituteInPlace "$file" --replace "${pkgconfig}/bin/pkg-config -config" \
-        ${pkgconfig}/bin/pkg-config
-      substituteInPlace "$file" --replace ${pkgconfig}/bin/pkg-config \
-        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkgconfig}/bin/pkg-config'"
+      substituteInPlace "$file" --replace "${pkg-config}/bin/pkg-config -config" \
+        ${pkg-config}/bin/pkg-config
+      substituteInPlace "$file" --replace ${pkg-config}/bin/pkg-config \
+        "PKG_CONFIG_PATH='$dev/lib/pkg-config' '${pkg-config}/bin/pkg-config'"
     done
   '' + lib.optionalString (ghostscript != null) ''
     for la in $out/lib/*.la; do
