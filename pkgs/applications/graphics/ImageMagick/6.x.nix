@@ -81,11 +81,20 @@ stdenv.mkDerivation (finalAttrs: {
         [ openexr librsvg openjpeg ]
       ++ lib.optional stdenv.isDarwin ApplicationServices;
 
-  propagatedBuildInputs =
-      [ bzip2 freetype libjpeg lcms2 fftw ]
-      ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
-        [ libX11 libXt libwebp ]
-      ;
+#  propagatedBuildInputs =
+#      [ bzip2 freetype libjpeg lcms2 fftw ]
+#      ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
+#        [ libX11 libXt libwebp ]
+#      ;
+
+  propagatedBuildInputs = [ fftw ]
+    ++ lib.optional bzip2Support bzip2
+    ++ lib.optional freetypeSupport freetype
+    ++ lib.optional libjpegSupport libjpeg
+    ++ lib.optional lcms2Support lcms2
+    ++ lib.optional libX11Support libX11
+    ++ lib.optional libXtSupport libXt
+    ++ lib.optional libwebpSupport libwebp;
 
   doCheck = false; # fails 2 out of 76 tests
 
@@ -94,12 +103,12 @@ stdenv.mkDerivation (finalAttrs: {
     moveToOutput "bin/*-config" "$dev"
     moveToOutput "lib/ImageMagick-*/config-Q16" "$dev" # includes configure params
     for file in "$dev"/bin/*-config; do
-      substituteInPlace "$file" --replace "${pkgconfig}/bin/pkg-config -config" \
-        ${pkgconfig}/bin/pkg-config
-      substituteInPlace "$file" --replace ${pkgconfig}/bin/pkg-config \
-        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkgconfig}/bin/pkg-config'"
+      substituteInPlace "$file" --replace "${pkg-config}/bin/pkg-config -config" \
+        ${pkg-config}/bin/${pkg-config.targetPrefix}pkg-config
+      substituteInPlace "$file" --replace ${pkg-config}/bin/pkg-config \
+        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkg-config}/bin/${pkg-config.targetPrefix}pkg-config'"
     done
-  '' + lib.optionalString (ghostscript != null) ''
+  '' + lib.optionalString ghostscriptSupport ''
     for la in $out/lib/*.la; do
       sed 's|-lgs|-L${lib.getLib ghostscript}/lib -lgs|' -i $la
     done
