@@ -1,27 +1,7 @@
-{ lib, stdenv, fetchFromGitHub, pkg-config, libtool
-, bzip2Support ? true, bzip2
-, zlibSupport ? true, zlib
-, libX11Support ? !stdenv.hostPlatform.isMinGW, libX11
-, libXtSupport ? !stdenv.hostPlatform.isMinGW, libXt
-, fontconfigSupport ? true, fontconfig
-, freetypeSupport ? true, freetype
-, ghostscriptSupport ? false, ghostscript
-, libjpegSupport ? true, libjpeg
-, djvulibreSupport ? true, djvulibre
-, lcms2Support ? true, lcms2
-, openexrSupport ? !stdenv.hostPlatform.isMinGW, openexr
-, libpngSupport ? true, libpng
-, liblqr1Support ? true, liblqr1
-, librsvgSupport ? !stdenv.hostPlatform.isMinGW, librsvg
-, libtiffSupport ? true, libtiff
-, libxml2Support ? true, libxml2
-, openjpegSupport ? !stdenv.hostPlatform.isMinGW, openjpeg
-, libwebpSupport ? !stdenv.hostPlatform.isMinGW, libwebp
-, libheifSupport ? true, libheif
-, libde265Support ? true, libde265
-, fftw
-, ApplicationServices, Foundation
-, testers
+{ lib, stdenv, fetchFromGitHub, fetchpatch, pkgconfig, libtool
+, bzip2, zlib, libX11, libXext, libXt, fontconfig, freetype, ghostscript, libjpeg
+, lcms2, openexr, libpng, librsvg, libtiff, libxml2, openjpeg, libwebp, fftw, libheif, libde265
+, ApplicationServices
 }:
 
 let
@@ -29,20 +9,30 @@ let
     if stdenv.hostPlatform.system == "i686-linux" then "i686"
     else if stdenv.hostPlatform.system == "x86_64-linux" || stdenv.hostPlatform.system == "x86_64-darwin" then "x86-64"
     else if stdenv.hostPlatform.system == "armv7l-linux" then "armv7l"
-    else if stdenv.hostPlatform.system == "aarch64-linux"  || stdenv.hostPlatform.system == "aarch64-darwin" then "aarch64"
-    else if stdenv.hostPlatform.system == "powerpc64le-linux" then "ppc64le"
-    else null;
+    else if stdenv.hostPlatform.system == "aarch64-linux" then "aarch64"
+    else throw "ImageMagick is not supported on this platform.";
 
   cfg = {
     version = "6.9.9-34";
     sha256 = "0sqrgyfi7i7x1akna95c1qhk9sxxswzm3pkssfi4w6v7bn24g25g";
     patches = [];
-  };
-
+  }
+    # Freeze version on mingw so we don't need to port the patch too often.
+    # FIXME: This version has multiple security vulnerabilities
+    // lib.optionalAttrs (stdenv.hostPlatform.isMinGW) {
+        version = "6.9.2-0";
+        sha256 = "17ir8bw1j7g7srqmsz3rx780sgnc21zfn0kwyj78iazrywldx8h7";
+        patches = [(fetchpatch {
+          name = "mingw-build.patch";
+          url = "https://raw.githubusercontent.com/Alexpux/MINGW-packages/"
+            + "01ca03b2a4ef/mingw-w64-imagemagick/002-build-fixes.patch";
+          sha256 = "1pypszlcx2sf7wfi4p37w1y58ck2r8cd5b2wrrwr9rh87p7fy1c0";
+        })];
+      };
 in
 
-stdenv.mkDerivation (finalAttrs: {
-  pname = "imagemagick";
+stdenv.mkDerivation rec {
+  name = "imagemagick-${version}";
   inherit (cfg) version;
 
   src = fetchFromGitHub {
@@ -71,69 +61,45 @@ stdenv.mkDerivation (finalAttrs: {
       [ "--enable-static" "--disable-shared" ] # due to libxml2 being without DLLs ATM
     ;
 
-  nativeBuildInputs = [ pkg-config libtool ];
+  nativeBuildInputs = [ pkgconfig libtool ];
 
-  buildInputs = [ ]
-    ++ lib.optional zlibSupport zlib
-    ++ lib.optional fontconfigSupport fontconfig
-    ++ lib.optional ghostscriptSupport ghostscript
-    ++ lib.optional liblqr1Support liblqr1
-    ++ lib.optional libpngSupport libpng
-    ++ lib.optional libtiffSupport libtiff
-    ++ lib.optional libxml2Support libxml2
-    ++ lib.optional libheifSupport libheif
-    ++ lib.optional libde265Support libde265
-    ++ lib.optional djvulibreSupport djvulibre
-    ++ lib.optional openexrSupport openexr
-    ++ lib.optional librsvgSupport librsvg
-    ++ lib.optional openjpegSupport openjpeg
-    ++ lib.optionals stdenv.isDarwin [
-      ApplicationServices
-      Foundation
-    ];
+  buildInputs =
+    [ zlib fontconfig freetype ghostscript
+      libpng libtiff libxml2 libheif libde265
+    ]
+    ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
+      [ openexr librsvg openjpeg ]
+    ++ lib.optional stdenv.isDarwin ApplicationServices;
 
-#  propagatedBuildInputs =
-#      [ bzip2 freetype libjpeg lcms2 fftw ]
-#      ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
-#        [ libX11 libXt libwebp ]
-#      ;
+  propagatedBuildInputs =
+    [ bzip2 freetype libjpeg lcms2 fftw ]
+    ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
+      [ libX11 libXext libXt libwebp ]
+    ;
 
-  propagatedBuildInputs = [ fftw ]
-    ++ lib.optional bzip2Support bzip2
-    ++ lib.optional freetypeSupport freetype
-    ++ lib.optional libjpegSupport libjpeg
-    ++ lib.optional lcms2Support lcms2
-    ++ lib.optional libX11Support libX11
-    ++ lib.optional libXtSupport libXt
-    ++ lib.optional libwebpSupport libwebp;
-
-  doCheck = false; # fails 2 out of 76 tests
+  doCheck = false; # fails 6 out of 76 tests
 
   postInstall = ''
     (cd "$dev/include" && ln -s ImageMagick* ImageMagick)
     moveToOutput "bin/*-config" "$dev"
     moveToOutput "lib/ImageMagick-*/config-Q16" "$dev" # includes configure params
     for file in "$dev"/bin/*-config; do
-      substituteInPlace "$file" --replace "${pkg-config}/bin/pkg-config -config" \
-        ${pkg-config}/bin/${pkg-config.targetPrefix}pkg-config
-      substituteInPlace "$file" --replace ${pkg-config}/bin/pkg-config \
-        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkg-config}/bin/${pkg-config.targetPrefix}pkg-config'"
+      substituteInPlace "$file" --replace "${pkgconfig}/bin/pkg-config -config" \
+        ${pkgconfig}/bin/pkg-config
+      substituteInPlace "$file" --replace ${pkgconfig}/bin/pkg-config \
+        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkgconfig}/bin/pkg-config'"
     done
-  '' + lib.optionalString ghostscriptSupport ''
+  '' + lib.optionalString (ghostscript != null) ''
     for la in $out/lib/*.la; do
       sed 's|-lgs|-L${lib.getLib ghostscript}/lib -lgs|' -i $la
     done
   '';
 
-  passthru.tests.pkg-config = testers.testMetaPkgConfig finalAttrs.finalPackage;
-
-  meta = with lib; {
-    homepage = "https://legacy.imagemagick.org/";
-    changelog = "https://legacy.imagemagick.org/script/changelog.php";
+  meta = with stdenv.lib; {
+    homepage = http://www.imagemagick.org/;
     description = "A software suite to create, edit, compose, or convert bitmap images";
-    pkgConfigModules = [ "ImageMagick" "MagickWand" ];
     platforms = platforms.linux ++ platforms.darwin;
-    maintainers = with maintainers; [ ];
+    maintainers = with maintainers; [ the-kenny wkennington ];
     license = licenses.asl20;
   };
-})
+}
