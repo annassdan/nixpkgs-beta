@@ -52,52 +52,40 @@ stdenv.mkDerivation (finalAttrs: {
     inherit (cfg) sha256;
   };
 
+  patches = [ ./imagetragick.patch ] ++ cfg.patches;
+
   outputs = [ "out" "dev" "doc" ]; # bin/ isn't really big
   outputMan = "out"; # it's tiny
 
   enableParallelBuilding = true;
 
-  configureFlags = [
-    "--with-frozenpaths"
-    (lib.withFeatureAs (arch != null) "gcc-arch" arch)
-    (lib.withFeature librsvgSupport "rsvg")
-    (lib.withFeature liblqr1Support "lqr")
-    (lib.withFeatureAs ghostscriptSupport "gs-font-dir" "${ghostscript}/share/ghostscript/fonts")
-    (lib.withFeature ghostscriptSupport "gslib")
-  ] ++ lib.optionals stdenv.hostPlatform.isMinGW [
-    # due to libxml2 being without DLLs ATM
-    "--enable-static" "--disable-shared"
-  ];
+  configureFlags =
+    [ "--with-frozenpaths" ]
+    ++ [ "--with-gcc-arch=${arch}" ]
+    ++ lib.optional (librsvg != null) "--with-rsvg"
+    ++ lib.optionals (ghostscript != null)
+      [ "--with-gs-font-dir=${ghostscript}/share/ghostscript/fonts"
+        "--with-gslib"
+      ]
+    ++ lib.optionals (stdenv.hostPlatform.isMinGW)
+      [ "--enable-static" "--disable-shared" ] # due to libxml2 being without DLLs ATM
+    ;
 
   nativeBuildInputs = [ pkg-config libtool ];
 
-  buildInputs = [ ]
-    ++ lib.optional zlibSupport zlib
-    ++ lib.optional fontconfigSupport fontconfig
-    ++ lib.optional ghostscriptSupport ghostscript
-    ++ lib.optional liblqr1Support liblqr1
-    ++ lib.optional libpngSupport libpng
-    ++ lib.optional libtiffSupport libtiff
-    ++ lib.optional libxml2Support libxml2
-    ++ lib.optional libheifSupport libheif
-    ++ lib.optional libde265Support libde265
-    ++ lib.optional djvulibreSupport djvulibre
-    ++ lib.optional openexrSupport openexr
-    ++ lib.optional librsvgSupport librsvg
-    ++ lib.optional openjpegSupport openjpeg
-    ++ lib.optionals stdenv.isDarwin [
-      ApplicationServices
-      Foundation
-    ];
+  buildInputs =
+      [ zlib fontconfig freetype ghostscript
+        libpng libtiff libxml2 libheif libde265
+      ]
+      ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
+        [ openexr librsvg openjpeg ]
+      ++ lib.optional stdenv.isDarwin ApplicationServices;
 
-  propagatedBuildInputs = [ fftw ]
-    ++ lib.optional bzip2Support bzip2
-    ++ lib.optional freetypeSupport freetype
-    ++ lib.optional libjpegSupport libjpeg
-    ++ lib.optional lcms2Support lcms2
-    ++ lib.optional libX11Support libX11
-    ++ lib.optional libXtSupport libXt
-    ++ lib.optional libwebpSupport libwebp;
+  propagatedBuildInputs =
+      [ bzip2 freetype libjpeg lcms2 fftw ]
+      ++ lib.optionals (!stdenv.hostPlatform.isMinGW)
+        [ libX11 libXext libXt libwebp ]
+      ;
 
   doCheck = false; # fails 2 out of 76 tests
 
@@ -106,12 +94,12 @@ stdenv.mkDerivation (finalAttrs: {
     moveToOutput "bin/*-config" "$dev"
     moveToOutput "lib/ImageMagick-*/config-Q16" "$dev" # includes configure params
     for file in "$dev"/bin/*-config; do
-      substituteInPlace "$file" --replace "${pkg-config}/bin/pkg-config -config" \
-        ${pkg-config}/bin/${pkg-config.targetPrefix}pkg-config
-      substituteInPlace "$file" --replace ${pkg-config}/bin/pkg-config \
-        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkg-config}/bin/${pkg-config.targetPrefix}pkg-config'"
+      substituteInPlace "$file" --replace "${pkgconfig}/bin/pkg-config -config" \
+        ${pkgconfig}/bin/pkg-config
+      substituteInPlace "$file" --replace ${pkgconfig}/bin/pkg-config \
+        "PKG_CONFIG_PATH='$dev/lib/pkgconfig' '${pkgconfig}/bin/pkg-config'"
     done
-  '' + lib.optionalString ghostscriptSupport ''
+  '' + lib.optionalString (ghostscript != null) ''
     for la in $out/lib/*.la; do
       sed 's|-lgs|-L${lib.getLib ghostscript}/lib -lgs|' -i $la
     done
