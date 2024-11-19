@@ -1,7 +1,28 @@
-{ lib, stdenv, fetchFromGitHub, fetchpatch, pkgconfig, libtool
-, bzip2, zlib, libX11, libXext, libXt, fontconfig, freetype, ghostscript, libjpeg
-, lcms2, openexr, libpng, librsvg, libtiff, libxml2, openjpeg, libwebp, fftw, libheif, libde265
-, ApplicationServices
+{ lib, stdenv, fetchFromGitHub, pkg-config, libtool
+, bzip2Support ? true, bzip2
+, zlibSupport ? true, zlib
+, libX11Support ? !stdenv.hostPlatform.isMinGW, libX11
+, libXext
+, libXtSupport ? !stdenv.hostPlatform.isMinGW, libXt
+, fontconfigSupport ? true, fontconfig
+, freetypeSupport ? true, freetype
+, ghostscriptSupport ? false, ghostscript
+, libjpegSupport ? true, libjpeg
+, djvulibreSupport ? true, djvulibre
+, lcms2Support ? true, lcms2
+, openexrSupport ? !stdenv.hostPlatform.isMinGW, openexr
+, libpngSupport ? true, libpng
+, liblqr1Support ? true, liblqr1
+, librsvgSupport ? !stdenv.hostPlatform.isMinGW, librsvg
+, libtiffSupport ? true, libtiff
+, libxml2Support ? true, libxml2
+, openjpegSupport ? !stdenv.hostPlatform.isMinGW, openjpeg
+, libwebpSupport ? !stdenv.hostPlatform.isMinGW, libwebp
+, libheifSupport ? true, libheif
+, libde265Support ? true, libde265
+, fftw
+, ApplicationServices, Foundation
+, testers
 }:
 
 let
