@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, pkg-config, libtool
+{ lib, stdenv, fetchFromGitHub, fetchpatch, pkg-config, libtool
 , bzip2Support ? true, bzip2
 , zlibSupport ? true, zlib
 , libX11Support ? !stdenv.hostPlatform.isMinGW, libX11
